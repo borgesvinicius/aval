@@ -88,7 +88,7 @@ app.get("/messages/:userId", (resquest, response) => {
 });
 app.put("/messages/:messageId", (request, response) => {
   const { messageId } = request.params;
-  const { title, description } = request.body;
+  const { titulo, descricao } = request.body;
 
   const messageIndex = messages.findIndex(
     (message) => message.id === messageId
@@ -100,11 +100,31 @@ app.put("/messages/:messageId", (request, response) => {
     });
   }
 
-  messages[messageIndex].title = title;
-  messages[messageIndex].description = description;
+  messages[messageIndex].titulo = titulo;
+  messages[messageIndex].descricao = descricao;
 
   response.status(200).json({
     message: "Recado atualizado com sucesso.",
+  });
+});
+app.delete("/messages/:messageId", (request, response) => {
+  const { messageId } = request.params;
+
+  const messageIndex = messages.findIndex(
+    (message) => message.id === messageId
+  );
+
+  if (messageIndex === -1) {
+    return response.status(404).json({
+      message: "Recado não encontrado.",
+    });
+  }
+
+  const deletedMessage = messages.splice(messageIndex, 1);
+
+  response.status(200).json({
+    message: "Recado excluído com sucesso.",
+    deletedMessage,
   });
 });
 
