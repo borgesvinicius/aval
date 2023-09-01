@@ -1,41 +1,36 @@
 import express from "express";
-import { v4 as uuidv4, v5 as uuidv5, NIL as uuidNil } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 const app = express();
-app.use(express.json());
 const users = [];
 const messages = [];
-
+app.use(express.json());
 app.post("/signup", async (request, response) => {
-  const { nome, email, senha } = request.body;
-  const validation = users.find((user) => user.email === email);
-  if (validation) {
-    return;
-    response.status(400).json({
-      message: "Esse email já foi cadastrado !",
+  const { name, email, password } = request.body;
+  const emailAlreadyRegistered = users.find((user) => user.email === email);
+  if (emailAlreadyRegistered) {
+    return response.status(400).json({
+      message: "E-mail já cadastrado.",
     });
   }
-  const hashedPassword = await bcrypt.hash(senha, 10);
-  const user = {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = {
     id: uuidv4(),
-    id,
-    nome,
+    name,
     email,
-    senha: hashedPassword,
+    password: hashedPassword,
   };
-  users.push(user);
-
-  return;
+  users.push(newUser);
   response.status(201).json({
-    message: "Foi criado o usuário !",
-    usuario: user,
+    message: "Conta criada com sucesso.",
+    user: newUser,
   });
 });
 app.post("/login", async (request, response) => {
-  const { email, senha } = request.body;
+  const { email, password } = request.body;
   const user = users.find((user) => user.email === email);
-  const senhaCombinada = await bcrypt.compare(senha, user.senha);
-  if (!senhaCombinada) {
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
     return response.status(400).json({
       message: "Credenciais inválidas.",
     });
@@ -49,83 +44,69 @@ app.post("/login", async (request, response) => {
     message: "Login bem-sucedido!",
     userId: user.id,
   });
-
-  app.post("/messages", (request, response) => {
-    const { titulo, descricao, userId } = request.body;
-    const user = users.find((user) => user.id === userId);
-  });
+});
+app.post("/messages", (request, response) => {
+  const { title, description, userId } = request.body;
+  const user = users.find((user) => user.id === userId);
   if (!user) {
     return response.status(404).json({
       message: "Usuário não encontrado.",
     });
   }
-  const novaMessage = {
+  const newMessage = {
     id: uuidv4(),
-    titulo,
-    descricao,
+    title,
+    description,
     userId,
   };
-  messages.push(novaMessage);
+  messages.push(newMessage);
   response.status(201).json({
     message: "Recado criado com sucesso.",
-    novaMessage,
+    newMessage,
   });
 });
 app.get("/messages/:userId", (resquest, response) => {
   const { userId } = resquest.params;
-
   const user = users.find((user) => user.id === userId);
-
   if (!user) {
     return response.status(404).json({
       message: "Usuário não encontrado.",
     });
   }
-
   const userMessages = messages.filter((message) => message.userId === userId);
-
   response.status(200).json(userMessages);
 });
 app.put("/messages/:messageId", (request, response) => {
   const { messageId } = request.params;
-  const { titulo, descricao } = request.body;
-
+  const { title, description } = request.body;
   const messageIndex = messages.findIndex(
     (message) => message.id === messageId
   );
-
   if (messageIndex === -1) {
     return response.status(404).json({
       message: "Recado não encontrado.",
     });
   }
-
-  messages[messageIndex].titulo = titulo;
-  messages[messageIndex].descricao = descricao;
-
+  messages[messageIndex].title = title;
+  messages[messageIndex].description = description;
   response.status(200).json({
     message: "Recado atualizado com sucesso.",
   });
 });
 app.delete("/messages/:messageId", (request, response) => {
   const { messageId } = request.params;
-
   const messageIndex = messages.findIndex(
     (message) => message.id === messageId
   );
-
   if (messageIndex === -1) {
     return response.status(404).json({
       message: "Recado não encontrado.",
     });
   }
-
   const deletedMessage = messages.splice(messageIndex, 1);
-
   response.status(200).json({
     message: "Recado excluído com sucesso.",
     deletedMessage,
   });
 });
-
-app.listen(8080, () => console.log("server nice on g"));
+app.listen(8080, () => console.log("Server  on"));
